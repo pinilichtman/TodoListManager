@@ -40,11 +40,11 @@ public class ToDoList extends Activity {
 		edtNewItem = (EditText) findViewById(R.id.edtNewItem);
 		menuItemAdd = (Menu) findViewById(R.id.add);
 		menuItemDelete = (ContextMenu) findViewById(R.id.del);
-
+		
 		registerForContextMenu(lstTodoItems);
 
 	}
-
+	
 	@Override
 	public void onCreateContextMenu(ContextMenu menu , View v, ContextMenuInfo info){
 		super.onCreateContextMenu(menu, v, info);

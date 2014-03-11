@@ -14,8 +14,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="31dp"
-        android:ems="10" >
+        android:layout_marginTop="1dp"
+        android:ems="10" 
+        android:hint="@string/add_to_the_list">
 
         <requestFocus />
     </EditText>
@@ -26,7 +27,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/edtNewItem"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="46dp" >
+        android:layout_marginTop="5dp" 
+        android:background="@color/green">
     </ListView>
 
 </RelativeLayout>
