@@ -43,18 +43,6 @@ public class ToDoList extends Activity {
 
 		registerForContextMenu(lstTodoItems);
 
-
-
-		//		lstTodoItems.setOnItemLongClickListener(new OnItemLongClickListener() {
-		//			@Override
-		//			public boolean onItemLongClick(AdapterView<?> parent, View view,
-		//					int position, long id) {
-		//				AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
-		//				builder.setMessage("do you wont");//.show();
-		//				// TODO Auto-generated method stub
-		//				return true;
-		//			}
-		//		});
 	}
 
 	@Override
