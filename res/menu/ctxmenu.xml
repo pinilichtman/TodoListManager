@@ -1,11 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <item
-        android:id="@+id/del"
+    <item  
+        android:id="@+id/menuItemDelete"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="@string/delete_string">
+        android:visible="false"
+        android:title="@string/delete_string"/>        
+    
+        <item
+        android:id="@+id/menuItemCall"
+        android:title="@string/call_string"
+        android:visible="false"/>
         
-    </item>
-   
+    
+    
 </menu>
