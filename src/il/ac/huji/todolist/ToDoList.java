@@ -149,7 +149,7 @@ public class ToDoList extends Activity {
 			public void done(ParseObject object, ParseException e) {
 				object.deleteInBackground();
 			}
-		});//.deleteInBackground();
+		});
 
 	}
 
