@@ -1,17 +1,18 @@
 package il.ac.huji.todolist;
 
 import java.util.ArrayList;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import android.net.Uri;
-import android.os.Bundle;
 import android.app.Activity;
+import android.app.Fragment.SavedState;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -25,7 +26,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.Parse;
+import com.parse.ParseAnalytics;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 public class ToDoList extends Activity {
 	final static long DAY = 86400000;
@@ -33,16 +40,41 @@ public class ToDoList extends Activity {
 	private MyAdapter adp;
 	private ArrayList<Task> list;
 	private ListView lstTodoItems ;
+	private SQLiteDatabase todo_db;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Parse.initialize(this, "vl49h5ZqCb91wKCg9Ktzh3FFQc4AWQoKGmPkCKTh", "ZdXX7yZa2CQpcc0LYQ27hIZ4cxmPcC2nUQYKQBoh");
 		setContentView(R.layout.activity_to_do_list);
 		list = new ArrayList<Task>();
 		adp = new MyAdapter(getApplicationContext(), R.layout.row, list);
 		lstTodoItems = (ListView) findViewById(R.id.lstTodoItems);
 		lstTodoItems.setAdapter(adp);		
 		registerForContextMenu(lstTodoItems);
+
+		
+		ParseQuery<ParseObject> q= new ParseQuery<ParseObject>("todo");
+		q.findInBackground(new FindCallback<ParseObject>() {					
+			
+			@Override
+			public void done(List<ParseObject> objects, ParseException e) {
+				if(e!= null){
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
+				Task t ;
+				for (ParseObject parseObject : objects) {
+					t= new Task((String)parseObject.get("title"),(Date)parseObject.get("due"));
+					list.add(t);
+				}
+				adp.notifyDataSetChanged();						
+			}
+		});				
+
+
+
 	}
 
 
@@ -55,8 +87,7 @@ public class ToDoList extends Activity {
 			case ADD:
 				s = data.getStringExtra("title");	
 				long d = data.getLongExtra("dueDate",-1);
-				list.add(new Task(s, new Date(d)));
-				adp.notifyDataSetChanged();
+				addNewItem(new Task(s, new Date(d)));				
 				break;
 			default: 
 				super.onActivityResult(requestCode, resultCode, data);
@@ -66,6 +97,15 @@ public class ToDoList extends Activity {
 			super.onActivityResult(requestCode, resultCode, data);
 
 
+	}
+
+	private void addNewItem(Task task){
+		ParseObject parseObj = new ParseObject("todo");
+		list.add(task);
+		adp.notifyDataSetChanged();
+		parseObj.put("title",task.task );
+		parseObj.put("due", task.date);
+		parseObj.saveInBackground();
 	}
 
 	@Override
@@ -87,8 +127,7 @@ public class ToDoList extends Activity {
 
 		switch(item.getItemId()){
 		case R.id.menuItemDelete:
-			list.remove(info.position);
-			adp.notifyDataSetChanged();
+			removeItem(	list.get(info.position));
 			break;
 		case R.id.menuItemCall:
 			call(list.get(info.position).getTask());
@@ -97,6 +136,23 @@ public class ToDoList extends Activity {
 		return true;
 
 	}
+
+
+	private void removeItem(Task task) {
+		list.remove(task);
+		adp.notifyDataSetChanged();
+		ParseQuery<ParseObject> prsq = new ParseQuery<ParseObject>("todo");
+		prsq.whereEqualTo("title",task.getTask());
+		prsq.whereEqualTo("due", task.getDate());
+		prsq.getFirstInBackground(new GetCallback<ParseObject>() {			
+			@Override
+			public void done(ParseObject object, ParseException e) {
+				object.deleteInBackground();
+			}
+		});//.deleteInBackground();
+
+	}
+
 
 
 	private void call(String tel) {
@@ -173,19 +229,19 @@ public class ToDoList extends Activity {
 				java.text.DateFormat sdf= DateFormat.getDateFormat(getApplicationContext());
 				Date d = entry.getDate();
 				txtTodoDueDate.setText( sdf.format(d)); 
-				
+
 				//set color
 				Date tmp = new Date();
 				Date today = new Date(tmp.getTime()-tmp.getTime()%DAY) ;
 				if(d.compareTo(today)<0){
 					txtTodoTitle.setTextColor(Color.RED);
 					txtTodoDueDate.setTextColor(Color.RED);
-					
+
 				}else{
 					txtTodoTitle.setTextColor(Color.BLUE);
 					txtTodoDueDate.setTextColor(Color.BLUE);
 				}
-				
+
 			}
 			return convertView;
 		}
