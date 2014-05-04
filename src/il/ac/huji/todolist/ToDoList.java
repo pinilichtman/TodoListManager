@@ -14,7 +14,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.widget.CursorAdapter;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -29,7 +28,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
@@ -40,7 +38,6 @@ import com.parse.ParseUser;
 
 
 public class ToDoList extends Activity {
-	final static long DAY = 86400000;
 	private static final int ADD = 0;
 	
 	private MyAdapter adp;
@@ -72,85 +69,18 @@ public class ToDoList extends Activity {
 				ParseUser.enableAutomaticUser();
 				
 				cursor = todo_db.query("todo", new String[]{"_id","title","due"},null, null,null, null, null);
-				int i=0;
 				if(cursor.moveToFirst()){
 					do{
-						//Log.d("db",""+cursor.getColumnIndex("_id")+" "+cursor.getColumnIndex("title")+" "+cursor.getColumnIndex("due")+" "+cursor.getInt(0) );
 						list.add(new Task( cursor.getString(1) ,new Date( cursor.getLong(2)),cursor.getLong(0)));
-						++i;
-						if(i%10==0){
-				//			adp.notifyDataSetChanged();
-						}
 					}while(cursor.moveToNext());
 				}
-	//			adp.notifyDataSetChanged();
-//				ParseQuery<ParseObject> q= new ParseQuery<ParseObject>("todo");
-//				q.findInBackground(new FindCallback<ParseObject>() {				
-//					@Override
-//					public void done(List<ParseObject> objects, ParseException e) {
-//						if(e!= null){
-//							e.printStackTrace();
-//							System.exit(2);
-//						}						
-//						Task t ;
-//						ContentValues v =new ContentValues();
-//						
-//						
-//						for (ParseObject parseObject : objects) {
-//							t= new Task((String)parseObject.get("title"),(Date)parseObject.get("due"));
-//							list.add(t);
-//							v.put("_id",list.size());
-//							v.put("title", t.getTask());
-//							v.put("due", t.getDate().getTime());
-//							todo_db.insert("todo", null, v);
-//						}
-//						adp.notifyDataSetChanged();						
-//					}
-//				});		
+	
 			}
 			
 		});
-		thread.start();
-		
-	
-
-		
+		thread.start();		
 		
 	}
-	
-	@Override
-	protected void onRestart() {
-		Log.d("sycle", "in on restart");
-		super.onRestart();
-	}
-	@Override
-	protected void onPause() {
-		Log.d("sycle", "in on pause");
-		super.onPause();
-	}
-	@Override
-	protected void onResume() {
-		Log.d("sycle", "in on resume");
-		super.onResume();
-	}
-	@Override
-	protected void onStop() {
-		Log.d("sycle", "in on stop");
-		super.onStop();
-	}
-	@Override
-	protected void onStart() {
-		Log.d("sycle", "in on start");
-		super.onStart();
-	}
-	
-	@Override
-	protected void onDestroy() {
-		Log.d("sycle", "in on destroy");
-		super.onDestroy();
-	}
-	
-	
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -173,9 +103,8 @@ public class ToDoList extends Activity {
 	}
 
 	private void addNewItem(Task task){
-		
+	
 		ContentValues todoRow = new ContentValues();
-		//todoRow.put("_id", list.size());
 		todoRow.put(DBHelper.TITLE_COLUMN_NAME, task.getTask());
 		todoRow.put(DBHelper.DUE_COLUMN_NAME, task.getDate().getTime());
 		long id =todo_db.insert(DBHelper.TABLE_NAME, null, todoRow);
@@ -183,7 +112,7 @@ public class ToDoList extends Activity {
 			Log.e("db","error inserting to bd");
 			System.exit(3);
 		}
-		Log.d("id1", ""+id);
+		
 		task.setDbId(id);
 		list.add(task);
 		adp.notifyDataSetChanged();
@@ -224,22 +153,15 @@ public class ToDoList extends Activity {
 			break;
 		}
 		return true;
-
 	}
 
-
 	private void removeItem(Task task ) {
-		Log.d("id2",""+task.getDbId());
 		todo_db.delete(DBHelper.TABLE_NAME, DBHelper.ID_COLUMN_NAME+"  == "+task.getDbId(),null);
 		list.remove(task);
 		adp.notifyDataSetChanged();
 		
 		ParseQuery<ParseObject> prsq = new ParseQuery<ParseObject>("todo");
-		
 		prsq.whereEqualTo("db_id", task.getDbId());
-		
-		//prsq.whereEqualTo("title",task.getTask());
-		//prsq.whereEqualTo("due", task.getDate());
 		prsq.getFirstInBackground(new GetCallback<ParseObject>() {			
 			@Override
 			public void done(ParseObject object, ParseException e) {
@@ -248,8 +170,6 @@ public class ToDoList extends Activity {
 		});
 
 	}
-
-
 
 	private void call(String tel) {
 		tel = tel.replace("call", "");
@@ -328,7 +248,7 @@ public class ToDoList extends Activity {
 
 				//set color
 				Date tmp = new Date();
-				Date today = new Date(tmp.getTime()-tmp.getTime()%DAY) ;
+				Date today = new Date(tmp.getTime()-tmp.getTime()%Task.DAY) ;
 				if(d.compareTo(today)<0){
 					txtTodoTitle.setTextColor(Color.RED);
 					txtTodoDueDate.setTextColor(Color.RED);
