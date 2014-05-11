@@ -13,6 +13,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -28,18 +29,64 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.parse.GetCallback;
-import com.parse.Parse;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
-
 
 
 public class ToDoList extends Activity {
+
+	private class GetDataFromDb extends AsyncTask<Integer,Void, Integer>{
+
+		private int i = 0 ;
+		private final static int CHUNK = 10 ;
+
+		@Override
+		protected Integer doInBackground(Integer... params) {
+			cursor = todo_db.query("todo", new String[]{"_id","title","due"},null, null,null, null, null);
+			if(cursor.moveToFirst()){
+				do{
+					list.add(new Task( cursor.getString(1) ,new Date( cursor.getLong(2)),cursor.getLong(0)));
+					if(++i%CHUNK == 0){
+						publishProgress((Void)null);
+					}
+				}while(cursor.moveToNext());
+			}
+
+
+			//			if (params.length == 0)
+			//			{
+			//				cursor = todo_db.query("todo", new String[]{"_id","title","due"},null, null,null, null, null);
+			//				if(!cursor.moveToFirst()){
+			//					return -1;
+			//				}
+			//			}else {
+			//				if(!cursor.moveToPosition(params[0])){
+			//					return -1;
+			//				}
+			//			}	
+			//
+			//			do{
+			//				list.add(new Task( cursor.getString(1) ,new Date( cursor.getLong(2)),cursor.getLong(0)));
+			//				if(++i%CHUNK == 0){
+			//					publishProgress((Void)null);
+			//				}
+			//			}while(cursor.moveToNext());
+
+			return cursor.getPosition();
+		}
+
+
+		@Override
+		protected void onProgressUpdate(Void... values) {
+			// TODO Auto-generated method stub
+			Log.d("ui", "ghkjgkjc");
+			adp.notifyDataSetChanged();
+			super.onProgressUpdate(values);
+		}
+
+
+
+	}
 	private static final int ADD = 0;
-	
+
 	private MyAdapter adp;
 	private ArrayList<Task> list;
 	private ListView lstTodoItems ;
@@ -60,28 +107,31 @@ public class ToDoList extends Activity {
 		lstTodoItems = (ListView) findViewById(R.id.lstTodoItems);
 		lstTodoItems.setAdapter(adp);		
 		registerForContextMenu(lstTodoItems);
-		Thread thread =new Thread(new Runnable() {			
-			@Override
-			public void run() {
-				Parse.initialize(getApplicationContext(),
-						"vl49h5ZqCb91wKCg9Ktzh3FFQc4AWQoKGmPkCKTh", 
-						"ZdXX7yZa2CQpcc0LYQ27hIZ4cxmPcC2nUQYKQBoh");
-				ParseUser.enableAutomaticUser();
-				
-				cursor = todo_db.query("todo", new String[]{"_id","title","due"},null, null,null, null, null);
-				if(cursor.moveToFirst()){
-					do{
-						list.add(new Task( cursor.getString(1) ,new Date( cursor.getLong(2)),cursor.getLong(0)));
-					}while(cursor.moveToNext());
-				}
-	
-			}
-			
-		});
-		thread.start();		
-		
+
+		new GetDataFromDb().doInBackground();
+
+		//		Thread thread =new Thread(new Runnable() {			
+		//			@Override
+		//			public void run() {
+		//	//			Parse.initialize(getApplicationContext(),
+		//	//					"vl49h5ZqCb91wKCg9Ktzh3FFQc4AWQoKGmPkCKTh", 
+		//	//					"ZdXX7yZa2CQpcc0LYQ27hIZ4cxmPcC2nUQYKQBoh");
+		//	//			ParseUser.enableAutomaticUser();
+		//				
+		//				cursor = todo_db.query("todo", new String[]{"_id","title","due"},null, null,null, null, null);
+		//				if(cursor.moveToFirst()){
+		//					do{
+		//						list.add(new Task( cursor.getString(1) ,new Date( cursor.getLong(2)),cursor.getLong(0)));
+		//					}while(cursor.moveToNext());
+		//				}
+		//	
+		//			}
+		//			
+		//		});
+		//		thread.start();		
+
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode == RESULT_OK){
@@ -103,7 +153,7 @@ public class ToDoList extends Activity {
 	}
 
 	private void addNewItem(Task task){
-	
+
 		ContentValues todoRow = new ContentValues();
 		todoRow.put(DBHelper.TITLE_COLUMN_NAME, task.getTask());
 		todoRow.put(DBHelper.DUE_COLUMN_NAME, task.getDate().getTime());
@@ -112,19 +162,19 @@ public class ToDoList extends Activity {
 			Log.e("db","error inserting to bd");
 			System.exit(3);
 		}
-		
+
 		task.setDbId(id);
 		list.add(task);
 		adp.notifyDataSetChanged();
-		
-		ParseObject parseObj = new ParseObject("todo");
-		parseObj.put("db_id", task.getDbId());
-		parseObj.put("title",task.getTask() );
-		parseObj.put("due", task.getDate());
-		parseObj.saveInBackground();
-		
-		
-		
+
+		//		ParseObject parseObj = new ParseObject("todo");
+		//		parseObj.put("db_id", task.getDbId());
+		//		parseObj.put("title",task.getTask() );
+		//		parseObj.put("due", task.getDate());
+		//		parseObj.saveInBackground();
+
+
+
 	}
 
 	@Override
@@ -159,15 +209,15 @@ public class ToDoList extends Activity {
 		todo_db.delete(DBHelper.TABLE_NAME, DBHelper.ID_COLUMN_NAME+"  == "+task.getDbId(),null);
 		list.remove(task);
 		adp.notifyDataSetChanged();
-		
-		ParseQuery<ParseObject> prsq = new ParseQuery<ParseObject>("todo");
-		prsq.whereEqualTo("db_id", task.getDbId());
-		prsq.getFirstInBackground(new GetCallback<ParseObject>() {			
-			@Override
-			public void done(ParseObject object, ParseException e) {
-				object.deleteInBackground();
-			}
-		});
+
+		//		ParseQuery<ParseObject> prsq = new ParseQuery<ParseObject>("todo");
+		//		prsq.whereEqualTo("db_id", task.getDbId());
+		//		prsq.getFirstInBackground(new GetCallback<ParseObject>() {			
+		//			@Override
+		//			public void done(ParseObject object, ParseException e) {
+		//				object.deleteInBackground();
+		//			}
+		//		});
 
 	}
 
